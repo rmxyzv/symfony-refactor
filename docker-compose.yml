@@ -1,0 +1,57 @@
+services:
+  php-fpm:
+    container_name: php-fpm
+    build:
+      context: ./
+      dockerfile: docker/php-fpm/Dockerfile
+      args:
+        - PHP_VERSION=8.3
+        - ENABLE_XDEBUG=true
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./:/app
+      - ./var/tmp:/tmp:rw
+    environment:
+      - PHP_IDE_CONFIG=serverName=docker
+      - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@mysql:3306/${DATABASE_NAME}
+    working_dir: /app
+    expose:
+      - "9000"
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.25-alpine3.19
+    container_name: nginx-app
+    ports:
+      - "2137:80"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:rw
+      - .:/app:ro
+    depends_on:
+      - php-fpm
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - '3306:3306'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data:

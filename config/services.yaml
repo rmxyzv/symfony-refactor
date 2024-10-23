@@ -1,0 +1,40 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    monolog.handler.stream:
+        class: Monolog\Handler\StreamHandler
+        arguments:
+            - 'php://stderr'
+        tags: [ 'monolog.handler' ]
+
+    logger:
+        class: Monolog\Logger
+        arguments:
+            - 'app'
+        calls:
+            - method: pushHandler
+              arguments:
+                  - '@monolog.handler.stream'
+            - method: pushProcessor
+              arguments:
+                  - '@App\Log\DayBasedFilterProcessor'
+
+    Psr\Log\LoggerInterface: '@logger'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller'
+        public: true
+        tags: [ 'controller.service_arguments' ]
+
+    App\DoctorsApiClientInterface: '@App\DoctorsInternalApiClient'
+
+

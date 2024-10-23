@@ -1,0 +1,4 @@
+memory_limit=2G
+serialize_precision=11
+post_max_size=5M
+sys_temp_dir=/tmp
